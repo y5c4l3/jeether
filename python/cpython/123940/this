@@ -1,0 +1,22 @@
+#!/bin/sh
+
+action=$1
+executable=${2:-python3}
+
+[ -z "$1" ] && echo "$0 [ init | install | test ]" && exit 1
+
+case "$action" in
+  init)
+    "$executable" -m ensurepip
+    "$executable" -m pip install pytest pytest-timeout ./python-zlib-ng
+    "$executable" ./test_threaded_gen.py
+    ;;
+  install)
+    "$executable" -m pip install ./python-zlib-ng
+    ;;
+  test)
+    "$executable" -m pytest ./python-zlib-ng/tests/test_gzip_ng_threaded.py::test_threaded_program_can_exit_on_error
+    ;;
+  *)
+    exit 1
+esac

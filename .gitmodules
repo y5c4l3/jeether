@@ -1,0 +1,4 @@
+[submodule "python/cpython/123940/python-zlib-ng"]
+	path = python/cpython/123940/python-zlib-ng
+	url = https://github.com/pycompression/python-zlib-ng
+	branch = issue53

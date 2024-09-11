@@ -1,0 +1,65 @@
+diff --git a/src/zlib_ng/gzip_ng_threaded.py b/src/zlib_ng/gzip_ng_threaded.py
+index 7fa7249..ebb83e9 100644
+--- a/src/zlib_ng/gzip_ng_threaded.py
++++ b/src/zlib_ng/gzip_ng_threaded.py
+@@ -109,22 +109,31 @@ class _ThreadedGzipReader(io.RawIOBase):
+             raise ValueError("I/O operation on closed file")
+
+     def _decompress(self):
++        print(1)
+         block_size = self.block_size
+         block_queue = self.queue
+         while self.running:
+             try:
++                print("Try read")
+                 data = self.fileobj.read(block_size)
++                print("Data", len(data))
+             except Exception as e:
+                 self.exception = e
++                print("Exception", e)
+                 return
+             if not data:
++                print("No data")
+                 return
+             while self.running:
++                print("Q Running")
+                 try:
+                     block_queue.put(data, timeout=0.05)
++                    print("Q put", len(data))
+                     break
+                 except queue.Full:
++                    print("Q full")
+                     pass
++        print("Done")
+
+     def readinto(self, b):
+         self._check_closed()
+@@ -153,6 +162,7 @@ class _ThreadedGzipReader(io.RawIOBase):
+         return self.pos
+
+     def close(self) -> None:
++        print("Close")
+         if self._closed:
+             return
+         self.running = False
+diff --git a/tests/test_gzip_ng_threaded.py b/tests/test_gzip_ng_threaded.py
+index 7ed06de..b875697 100644
+--- a/tests/test_gzip_ng_threaded.py
++++ b/tests/test_gzip_ng_threaded.py
+@@ -213,10 +213,14 @@ def test_threaded_writer_does_not_close_stream():
+     assert gzip.decompress(test_stream.read()) == b"thisisatest"
+
+
+-@pytest.mark.timeout(5)
++# @pytest.mark.timeout(5)
++# @pytest.mark.parametrize(
++#     ["mode", "threads"], itertools.product(["rb", "wb"], [1, 2]))
++@pytest.mark.timeout(3)
+ @pytest.mark.parametrize(
+-    ["mode", "threads"], itertools.product(["rb", "wb"], [1, 2]))
++    ["mode", "threads"], itertools.product(["rb"], [2]))
+ def test_threaded_program_can_exit_on_error(tmp_path, mode, threads):
++    print(mode, threads)
+     program = tmp_path / "no_context_manager.py"
+     test_file = tmp_path / "output.gz"
+     # Write 40 mb input data to saturate read buffer. Because of the repetitive
