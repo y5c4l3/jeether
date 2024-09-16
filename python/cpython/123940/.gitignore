@@ -1,2 +1,3 @@
 test.gz
 test_threaded.sample.py
+__pycache__
