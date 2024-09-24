@@ -1,0 +1,57 @@
+diff --git a/Lib/test/test_re.py b/Lib/test/test_re.py
+index 7e454cb..188a987 100644
+--- a/Lib/test/test_re.py
++++ b/Lib/test/test_re.py
+@@ -893,9 +893,8 @@ def test_string_boundaries(self):
+         self.assertTrue(re.search(r"\B", "abc"))
+         # There is no non-boundary match at the start of a string.
+         self.assertFalse(re.match(r"\B", "abc"))
+-        # However, an empty string contains no word boundaries, and also no
+-        # non-boundaries.
+-        self.assertIsNone(re.search(r"\B", ""))
++        # gh-124130: An empty string should be non-boundary.
++        self.assertTrue(re.match(r"\B", ""))
+         # This one is questionable and different from the perlre behaviour,
+         # but describes current behavior.
+         self.assertIsNone(re.search(r"\b", ""))
+diff --git a/Misc/NEWS.d/next/Library/2024-09-16-23-35-08.gh-issue-124130.bKRyYk.rst b/Misc/NEWS.d/next/Library/2024-09-16-23-35-08.gh-issue-124130.bKRyYk.rst
+new file mode 100644
+index 0000000..546fcc2
+--- /dev/null
++++ b/Misc/NEWS.d/next/Library/2024-09-16-23-35-08.gh-issue-124130.bKRyYk.rst
+@@ -0,0 +1,4 @@
++The category ``\B`` in :mod:`re` currently does not match empty strings, which
++is against the general expectation. This patch fixes the problem, affecting
++operation ``SRE_AT_NON_BOUNDARY``, ``SRE_AT_LOC_NON_BOUNDARY`` and
++``SRE_AT_UNI_NON_BOUNDARY``.
+diff --git a/Modules/_sre/sre_lib.h b/Modules/_sre/sre_lib.h
+index 97fbb0a..78128e8 100644
+--- a/Modules/_sre/sre_lib.h
++++ b/Modules/_sre/sre_lib.h
+@@ -52,7 +52,7 @@ SRE(at)(SRE_STATE* state, const SRE_CHAR* ptr, SRE_CODE at)
+ 
+     case SRE_AT_NON_BOUNDARY:
+         if (state->beginning == state->end)
+-            return 0;
++            return 1;
+         thatp = ((void*) ptr > state->beginning) ?
+             SRE_IS_WORD((int) ptr[-1]) : 0;
+         thisp = ((void*) ptr < state->end) ?
+@@ -70,7 +70,7 @@ SRE(at)(SRE_STATE* state, const SRE_CHAR* ptr, SRE_CODE at)
+ 
+     case SRE_AT_LOC_NON_BOUNDARY:
+         if (state->beginning == state->end)
+-            return 0;
++            return 1;
+         thatp = ((void*) ptr > state->beginning) ?
+             SRE_LOC_IS_WORD((int) ptr[-1]) : 0;
+         thisp = ((void*) ptr < state->end) ?
+@@ -88,7 +88,7 @@ SRE(at)(SRE_STATE* state, const SRE_CHAR* ptr, SRE_CODE at)
+ 
+     case SRE_AT_UNI_NON_BOUNDARY:
+         if (state->beginning == state->end)
+-            return 0;
++            return 1;
+         thatp = ((void*) ptr > state->beginning) ?
+             SRE_UNI_IS_WORD((int) ptr[-1]) : 0;
+         thisp = ((void*) ptr < state->end) ?
